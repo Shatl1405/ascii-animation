@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>ASCII Ripple</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>ASCII Ripple HiDPI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background: white;
       overflow: hidden;
+      background: white;
       height: 100%;
       width: 100%;
       font-family: monospace;
@@ -32,25 +32,29 @@
     const rows = 40;
     let charWidth, charHeight;
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      charWidth = canvas.width / cols;
-      charHeight = canvas.height / rows;
-    }
-
     const chars = [' ', '.', ':', '-', '=', '+', '*', '#', '%', '@'];
+
+    const scale = window.devicePixelRatio || 1;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * scale;
+      canvas.height = window.innerHeight * scale;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // сброс трансформации
+      ctx.scale(scale, scale); // масштаб для Retina
+      charWidth = window.innerWidth / cols;
+      charHeight = window.innerHeight / rows;
+    }
 
     let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     let smoothMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-    // Мышь
     window.addEventListener('mousemove', e => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
     });
 
-    // Палец (без блокировки прокрутки)
     window.addEventListener('touchmove', e => {
       if (e.touches.length > 0) {
         mouse.x = e.touches[0].clientX;

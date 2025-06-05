@@ -2,101 +2,102 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>ASCII Ripple</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ASCII Animation</title>
   <style>
     html, body {
       margin: 0;
-      overflow: hidden;
+      padding: 0;
       background: white;
-      color: black;
-      font-family: monospace;
+      overflow: hidden;
       height: 100%;
+      width: 100%;
+      touch-action: none; /* отключает жесты браузера */
     }
-    #ascii {
-      position: absolute;
-      top: 0;
-      left: 0;
-      white-space: pre;
-      line-height: 1;
-      user-select: none;
-      pointer-events: none;
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: white;
     }
   </style>
 </head>
 <body>
-<pre id="ascii"></pre>
+  <canvas id="asciiCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById('asciiCanvas');
+    const ctx = canvas.getContext('2d');
 
-<script>
-const ascii = document.getElementById('ascii');
-const chars = ' .:-=+*#%@';
-let cols = 0, rows = 0;
-let mouseX = 0.5, mouseY = 0.5;
+    const cols = 160;
+    const rows = 40;
+    let charWidth, charHeight;
 
-function getChar(val) {
-  const index = Math.floor(val * (chars.length - 1));
-  return chars[index];
-}
-
-function measureCharSize() {
-  const span = document.createElement('span');
-  span.textContent = 'A';
-  span.style.visibility = 'hidden';
-  span.style.fontFamily = 'monospace';
-  span.style.fontSize = '12px';
-  document.body.appendChild(span);
-  const rect = span.getBoundingClientRect();
-  document.body.removeChild(span);
-  return { width: rect.width, height: rect.height };
-}
-
-function updateResolution() {
-  const charSize = measureCharSize();
-  cols = Math.floor(window.innerWidth / charSize.width);
-  rows = Math.floor(window.innerHeight / charSize.height);
-  ascii.style.fontSize = `${charSize.height}px`;
-}
-
-document.addEventListener('mousemove', e => {
-  mouseX = e.clientX / window.innerWidth;
-  mouseY = e.clientY / window.innerHeight;
-});
-
-document.addEventListener('touchmove', e => {
-  if (e.touches.length > 0) {
-    const touch = e.touches[0];
-    mouseX = touch.clientX / window.innerWidth;
-    mouseY = touch.clientY / window.innerHeight;
-  }
-}, { passive: true });
-
-window.addEventListener('resize', () => {
-  updateResolution();
-});
-
-function render() {
-  const t = Date.now() * 0.001;
-  let output = '';
-
-  for (let y = 0; y < rows; y++) {
-    let line = '';
-    for (let x = 0; x < cols; x++) {
-      const dx = x / cols - mouseX;
-      const dy = y / rows - mouseY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const wave = Math.sin(dist * 20 - t * 5);
-      const val = (wave + 1) / 2;
-      line += getChar(val);
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      charWidth = canvas.width / cols;
+      charHeight = canvas.height / rows;
     }
-    output += line + '\n';
-  }
 
-  ascii.textContent = output;
-  requestAnimationFrame(render);
-}
+    const chars = [' ', '.', ':', '-', '=', '+', '*', '#', '%', '@'];
 
-updateResolution();
-render();
-</script>
+    let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let smoothMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+    // Мышь
+    window.addEventListener('mousemove', e => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    // Палец (с отключением скролла)
+    window.addEventListener('touchmove', e => {
+      if (e.touches.length > 0) {
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+        e.preventDefault(); // блокирует прокрутку
+      }
+    }, { passive: false });
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function draw(time) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'black';
+      ctx.font = `${charHeight * 0.95}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const t = time * 0.0015;
+
+      smoothMouse.x = lerp(smoothMouse.x, mouse.x, 0.05);
+      smoothMouse.y = lerp(smoothMouse.y, mouse.y, 0.05);
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const px = x * charWidth + charWidth / 2;
+          const py = y * charHeight + charHeight / 2;
+
+          const dx = px - smoothMouse.x;
+          const dy = py - smoothMouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          const wave = Math.sin(dist * 0.07 - t) * 0.5 + 0.5;
+          const index = Math.floor(wave * (chars.length - 1));
+          const char = chars[index];
+
+          ctx.fillText(char, px, py);
+        }
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    requestAnimationFrame(draw);
+  </script>
 </body>
 </html>

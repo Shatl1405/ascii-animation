@@ -12,7 +12,7 @@
       overflow: hidden;
       height: 100%;
       width: 100%;
-      touch-action: none; /* отключает жесты браузера */
+      font-family: monospace;
     }
     canvas {
       display: block;
@@ -50,14 +50,13 @@
       mouse.y = e.clientY;
     });
 
-    // Палец (с отключением скролла)
+    // Палец (без блокировки прокрутки)
     window.addEventListener('touchmove', e => {
       if (e.touches.length > 0) {
         mouse.x = e.touches[0].clientX;
         mouse.y = e.touches[0].clientY;
-        e.preventDefault(); // блокирует прокрутку
       }
-    }, { passive: false });
+    }, { passive: true });
 
     function lerp(a, b, t) {
       return a + (b - a) * t;
